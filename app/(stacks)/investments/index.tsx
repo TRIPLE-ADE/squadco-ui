@@ -10,8 +10,8 @@ import {
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONT, SIZES, SHADOWS } from '../../../constants/theme';
-import Button from '../../../components/common/Button';
+import { COLORS, FONT, SIZES, SHADOWS } from '@/constants/theme';
+import Button from '@/components/common/Button';
 
 // Dummy data
 const INVESTMENT_PORTFOLIO = {

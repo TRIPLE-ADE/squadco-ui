@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONT, SIZES, SHADOWS } from '../../../constants/theme';
+import { COLORS, FONT, SIZES, SHADOWS } from '@/constants/theme';
 
 // Dummy data
 const INVESTMENT_PORTFOLIO = {

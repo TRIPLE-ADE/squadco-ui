@@ -50,7 +50,20 @@ export default function Dashboard() {
   }: {
     item: { type: string; title: string; date: string; amount: number };
   }) => (
-    <View style={styles.transactionItem}>
+    <TouchableOpacity
+      onPress={() =>
+        router.push({
+          pathname: "/transaction/details", // Navigate to the details page
+          params: {
+            type: item.type,
+            title: item.title,
+            date: item.date,
+            amount: item.amount.toString(), // Convert number to string for URL safety
+          },
+        })
+      }
+      style={styles.transactionItem}
+    >
       <View style={styles.transactionIcon}>
         <Ionicons
           name={
@@ -74,7 +87,7 @@ export default function Dashboard() {
       >
         {item.type === "income" ? "+" : "-"}${item.amount}
       </Text>
-    </View>
+    </TouchableOpacity>
   );
 
   const onRefresh = React.useCallback(async () => {
@@ -501,7 +514,7 @@ export default function Dashboard() {
       {/* FAB for adding new savings goal */}
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => router.push("/dashboard/savings/new")}
+        onPress={() => router.push("/savings/new")}
       >
         <Ionicons name="add" size={24} color={COLORS.white} />
       </TouchableOpacity>

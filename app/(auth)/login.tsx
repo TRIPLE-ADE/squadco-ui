@@ -11,9 +11,10 @@ import {
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONT, SIZES } from '../../constants/theme';
-import Button from '../../components/common/Button';
-import Input from '../../components/common/Input';
+import { COLORS, FONT, SIZES } from '@/constants/theme';
+import Button from '@/components/common/Button';
+import Input from '@/components/common/Input';
+import { useAuth } from '@/context/auth-context';
 
 interface FormData {
   email: string;
@@ -26,6 +27,7 @@ interface FormErrors {
 }
 
 const LoginScreen = () => {
+  const { login } = useAuth();
   const [formData, setFormData] = useState<FormData>({
     email: '',
     password: '',
@@ -59,7 +61,7 @@ const LoginScreen = () => {
     try {
       // TODO: Implement actual login logic
       await new Promise(resolve => setTimeout(resolve, 1500)); // Simulated delay
-      router.replace('/dashboard');
+      await login(formData.email, formData.password);
     } catch (error) {
       console.error('Login error:', error);
       // Handle error appropriately
@@ -119,7 +121,7 @@ const LoginScreen = () => {
 
           <TouchableOpacity
             style={styles.forgotPassword}
-            onPress={() => router.push('/auth/forgot-password')}
+            // onPress={() => router.push('/auth/forgot-password')}
           >
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
@@ -134,24 +136,10 @@ const LoginScreen = () => {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Don't have an account?</Text>
-          <TouchableOpacity onPress={() => router.push('/auth/signup')}>
+          <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
             <Text style={styles.footerLink}>Sign Up</Text>
           </TouchableOpacity>
         </View>
-
-        <View style={styles.dividerContainer}>
-          <View style={styles.divider} />
-          <Text style={styles.dividerText}>OR</Text>
-          <View style={styles.divider} />
-        </View>
-
-        <Button
-          title="Continue with Google"
-          variant="outline"
-          onPress={() => {/* TODO: Implement Google Sign In */}}
-          style={styles.socialButton}
-          leftIcon={<Ionicons name="logo-google" size={20} color={COLORS.text} />}
-        />
       </ScrollView>
     </KeyboardAvoidingView>
   );
