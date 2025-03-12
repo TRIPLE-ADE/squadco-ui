@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,13 +6,12 @@ import {
   Dimensions,
   TouchableOpacity,
   Animated,
-  Easing,
 } from 'react-native';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONT, SIZES, SHADOWS } from '../../../constants/theme';
-import Button from '../../../components/common/Button';
+import { COLORS, FONT, SIZES, SHADOWS } from '@/constants/theme';
+import Button from '@/components/common/Button';
 
 const { width, height } = Dimensions.get('window');
 

@@ -11,9 +11,9 @@ import {
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONT, SIZES } from '../../constants/theme';
-import Button from '../../components/common/Button';
-import Input from '../../components/common/Input';
+import { COLORS, FONT, SIZES } from '@/constants/theme';
+import Button from '@/components/common/Button';
+import Input from '@/components/common/Input';
 
 interface FormData {
   fullName: string;
@@ -78,7 +78,7 @@ const SignUpScreen = () => {
     try {
       // TODO: Implement actual sign-up logic
       await new Promise(resolve => setTimeout(resolve, 1500)); // Simulated delay
-      router.replace('/dashboard');
+      router.replace('/');
     } catch (error) {
       console.error('Sign-up error:', error);
       // Handle error appropriately
@@ -174,7 +174,7 @@ const SignUpScreen = () => {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Already have an account?</Text>
-          <TouchableOpacity onPress={() => router.push('/auth/login')}>
+          <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
             <Text style={styles.footerLink}>Log In</Text>
           </TouchableOpacity>
         </View>
