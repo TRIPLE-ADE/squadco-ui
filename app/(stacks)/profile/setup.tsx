@@ -538,15 +538,14 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 16,
+    alignItems: "center",
   },
   secondaryButton: {
     backgroundColor: "#f5f5f5",
     borderRadius: 8,
     padding: 16,
-    alignItems: "center",
-    flex: 1,
-    marginRight: 8,
+    marginRight: 8, 
+    marginTop: 16,
   },
   secondaryButtonText: {
     color: "#333",

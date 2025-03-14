@@ -3,13 +3,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Create an Axios instance
 const api = axios.create({
-  baseURL: 'https://your-api-base-url.com/api', // Replace with your API base URL
+  baseURL: 'https://ikigai-backend-74qi.onrender.com/', // Replace with your API base URL
 });
 
 // Request interceptor to add token to headers if needed
 api.interceptors.request.use(
   async (config) => {
-    const token = await AsyncStorage.getItem('token'); // Assuming you store your token in AsyncStorage
+    const token = await AsyncStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -23,10 +23,15 @@ api.interceptors.request.use(
 // Response interceptor for handling errors globally
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+ async (error) => {
+    if (error.response?.status === 401) {
+      // Clear token and redirect to login
+      await AsyncStorage.removeItem("token");
+      // Redirect user to login screen
+      console.error('API Error:', error);
+    }
     // Handle error globally
-    console.error('API Error:', error);
-    return Promise.reject(error);
+    return Promise.reject(error);    
   }
 );
 

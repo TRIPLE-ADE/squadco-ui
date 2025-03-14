@@ -20,6 +20,13 @@ export const COLORS = {
   background: '#FFFFFF',
   card: '#FFFFFF',
   text: '#000000',
+
+  // New colors for chat
+  chatUserBubble: "#5B37B7",
+  chatBotBubble: "#F0EBFA",
+  chatUserText: "#FFFFFF",
+  chatBotText: "#333333",
+  chatInputBackground: "#F5F5F5",
 };
 
 export const FONT = {

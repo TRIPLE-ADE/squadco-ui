@@ -10,8 +10,12 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+
+// Constants      
 import { COLORS, FONT, SIZES } from '@/constants/theme';
 import { ONBOARDING_DATA } from '@/constants/onboarding';
+
+// Components
 import Button from '@/components/common/Button';
 
 const OnboardingScreen = () => {
@@ -84,12 +88,12 @@ const OnboardingScreen = () => {
     if (currentIndex < ONBOARDING_DATA.length - 1) {
       scrollTo(currentIndex + 1);
     } else {
-      router.replace('/(auth)/signup');
+      router.replace('/(auth)/login');
     }
   };
 
   const handleSkip = () => {
-    router.replace('/(auth)/signup');
+    router.replace('/(tabs)');
   };
 
   return (
