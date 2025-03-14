@@ -50,8 +50,8 @@ const Input: React.FC<InputProps> = ({
           style={[
             styles.input,
             inputStyle,
-            leftIcon && { paddingLeft: 0 },
-            rightIcon && { paddingRight: 0 },
+            leftIcon ? { paddingLeft: 0 } : {},
+            rightIcon ? { paddingRight: 0 } : {},
           ]}
           placeholderTextColor={COLORS.gray400}
           {...props}

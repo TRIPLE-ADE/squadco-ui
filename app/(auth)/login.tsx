@@ -11,9 +11,15 @@ import {
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+
+// Constants
 import { COLORS, FONT, SIZES } from '@/constants/theme';
+
+// Components
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
+
+// Context
 import { useAuth } from '@/context/auth-context';
 
 interface FormData {
@@ -60,7 +66,7 @@ const LoginScreen = () => {
     setLoading(true);
     try {
       // TODO: Implement actual login logic
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulated delay
+      // await new Promise(resolve => setTimeout(resolve, 1500)); // Simulated delay
       await login(formData.email, formData.password);
     } catch (error) {
       console.error('Login error:', error);

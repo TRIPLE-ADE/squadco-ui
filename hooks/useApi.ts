@@ -23,7 +23,7 @@ export const useFetchData = ({ endpoint, params = {}, enabled = true }: FetchOpt
 /**
  * Custom hook for posting data
  */
-export const usePostData = (endpoint: string, onSuccess?: () => void) => {
+export const usePostData = (endpoint: string, onSuccess?: () => void, onError?: (error: any) => void) => {
   const queryClient = useQueryClient();
 
   return useMutation({

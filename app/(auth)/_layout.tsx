@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
-import { useAuth } from "@/context/auth-context";
-import { Redirect, Stack } from "expo-router";
 import React from "react";
+import { Redirect, Stack } from "expo-router";
+
+// Context
+import { useAuth } from "@/context/auth-context";
 
 export default function AuthRoutesLayout() {
   const { isAuthenticated } = useAuth();

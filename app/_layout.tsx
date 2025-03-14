@@ -13,9 +13,13 @@ import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { AuthProvider } from "@/context/auth-context";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import ToastManager from "toastify-react-native";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
+const queryClient = new QueryClient();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -35,10 +39,13 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Slot />
         <StatusBar style="auto" />
+        <ToastManager textStyle={{ fontSize: 16, fontWeight: 'bold' }} style={{height: 'auto'}} />
       </AuthProvider>
+      </QueryClientProvider>
     </ThemeProvider>
   );
 }

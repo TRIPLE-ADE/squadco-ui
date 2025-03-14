@@ -269,7 +269,7 @@ export default function Dashboard() {
             {/* Withdraw */}
             <TouchableOpacity
               style={styles.actionButton}
-              onPress={() => navigateTo("/investments")}
+              onPress={() => navigateTo("/wallet/transfer")}
             >
               <View style={[styles.actionIcon, { backgroundColor: "#E8F5E9" }]}>
                 <Ionicons name="arrow-down-outline" size={24} color="#4CAF50" />
@@ -338,7 +338,7 @@ export default function Dashboard() {
             {/* Finance Buddy */}
             <TouchableOpacity
               style={styles.actionButton}
-              onPress={() => navigateTo("/finance-buddy")}
+              onPress={() => navigateTo("/(stacks)/ai/chat")}
             >
               <View style={[styles.actionIcon, { backgroundColor: "#E8EAF6" }]}>
                 <Ionicons
