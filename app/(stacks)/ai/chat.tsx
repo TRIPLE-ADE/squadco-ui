@@ -1,6 +1,3 @@
-// AIzaSyCbb2IXrqNJtqse6wVQaZySntpJHMi-TF4
-// AIzaSyCbb2IXrqNJtqse6wVQaZySntpJHMi-TF4
-
 import React, { useState } from "react";
 import {
   View,
