@@ -1,50 +1,105 @@
-# Welcome to your Expo app 👋
+# **Smart School Finance Hub**  
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**Ensuring Every Student Can Afford Their Education**  
 
-## Get started
+## 🚀 Overview  
 
-1. Install dependencies
+**Smart School Finance Hub** is a **financial inclusion platform** designed to help students **save, invest, and automate tuition payments**—ensuring no student drops out due to financial struggles.  
 
-   ```bash
-   npm install
-   ```
+Many students, like Samuel (a bright student who dropped out after the 2020 pandemic), face **tuition challenges** due to poor financial planning, lack of savings culture, and limited payment flexibility. **Our solution empowers students to take control of their finances and secure their education.**  
 
-2. Start the app
+---
 
-   ```bash
-    npx expo start
-   ```
+## 🎯 **Key Features**  
 
-In the output, you'll find options to open the app in a
+✅ **AI-Driven Smart Savings:** Personalized savings plans tailored to students’ income & spending habits.  
+✅ **Micro-Investments:** Students can **invest small amounts** and watch their school fees grow over time.  
+✅ **Automated School Fee Payments:** No more late payments—set it and forget it.  
+✅ **Flexible Payment Plans:** Pay in installments, scheduled payments, or even crowdfunding support.  
+✅ **Payment Methods:** Support for **SquadCo, bank transfers** (optional).  
+✅ **Emergency Loan & Financial Aid Integration:** Access emergency funds or scholarships when needed.  
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## 🏆 **Why This Matters**  
 
-## Get a fresh project
+📌 **For Students:** No more stress, last-minute borrowing, or dropping out due to financial issues.  
+📌 **For Schools:** Better financial planning with **automated & timely tuition payments**.  
+📌 **For Society:** Improves education accessibility, leading to a **more financially stable generation**.  
 
-When you're ready, run:
+---
 
+## 🛠 **Tech Stack**  
+
+| Technology      | Purpose |
+|---------------|---------|
+| **Expo** (React Native) | Mobile Frontend (Fast, scalable UI) |
+| **Python** | Backend (API & logic processing) |
+| **MongoDB** | Database (stores user savings, investments, & payments) |
+| **SquadCo** Payment integration for automated school fees payments |
+| **Gemini API** | AI-driven financial planning & recommendations |
+| **Tailwind CSS** | UI styling & responsiveness |
+
+---
+
+## 🎥 **Demo Video**  
+
+📌 Watch our walkthrough video here: **[Demo Video Link](/assets/demo/squad.mp4)**  
+
+---
+
+## 💻 **Setup & Installation**  
+
+### **1️⃣ Clone the Repository**  
 ```bash
-npm run reset-project
+git clone https://github.com/yourusername/smart-school-finance-hub.git
+cd smart-school-finance-hub
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### **2️⃣ Install Dependencies**  
+```bash
+npm install
+```
 
-## Learn more
 
-To learn more about developing your project with Expo, look at the following resources:
+---
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## 🏗 **How It Works**  
 
-## Join the community
+1️⃣ **User Registration & Setup**  
+   - Students create an account and set up their **smart savings plan**.  
 
-Join our community of developers creating universal apps.
+2️⃣ **AI-Driven Savings & Micro-Investments**  
+   - AI suggests the best **savings plan** based on income & expenses.  
+   - Users can **invest small amounts**, growing their tuition fund.  
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+3️⃣ **Automated Tuition Payment**  
+   - Payments are **auto-debited** at the right time to avoid delays.  
+
+4️⃣ **Flexible Payment Options**  
+   - Choose **installments, full payment, or external funding** (crowdfunding, loans, or scholarships).  
+
+5️⃣ **Smart Notifications & Emergency Aid**  
+   - Get **alerts** for upcoming payments.  
+   - Request **emergency funds** in case of financial difficulties.  
+
+---
+
+## 🌍 **Future Roadmap**  
+
+🔹 **Scholarship for Outstanding**  
+🔹 **AI-Generated Financial Literacy Content for Students**  
+🔹 **Mobile App for Seamless Access**  
+🔹 **Multi-Currency Support for International Students**  
+
+---
+
+## 🤝 **Contributors**  
+
+👤 **Abdulrasheed Abdulsalam (@TRIPLE-ADE)**  
+👤 **Abdulkabir sultan (@abdulkabirsultan)**  
+👤 **Oyebamiji Mustapha Oyetunde (@Musoye)**  
+👤 **Bilal Oyeleke - SOBIL (@Sobilo34)**  
+
+
+### **🚀 Let’s ensure that NO student is left behind due to financial struggles!**  
