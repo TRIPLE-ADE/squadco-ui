@@ -44,7 +44,7 @@ Many students, like Samuel (a bright student who dropped out after the 2020 pand
 
 ## 🎥 **Demo Video**  
 
-📌 Watch our walkthrough video here: **[Demo Video Link](/assets/demo/squad.mp4)**  
+📌 Watch our walkthrough video here: **[Demo Video Link](https://youtube.com/shorts/_0H_HvfSh0w)**  
 
 ---
 
