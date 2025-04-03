@@ -15,6 +15,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useAuth } from "@/context/auth-context";
+import api from "@/services/api";
 
 // Payment method types
 type PaymentMethod = "bank" | "card" | "ussd";
@@ -23,19 +24,20 @@ type PaymentMethod = "bank" | "card" | "ussd";
 const BANK_DETAILS = {
   accountName: "FinApp Virtual Wallet",
   accountNumber: "0123456789",
-  bankName: "First Bank",
+  bankName: "GT Bank",
 };
 
 export default function TopUpWallet() {
   const router = useRouter();
-  const { user } = useAuth();
-  const [balance, setBalance] = useState("2,450.00");
+  const { user, updateUserProfile } = useAuth();
   const [amount, setAmount] = useState("");
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>("bank");
   const [referenceId, setReferenceId] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isTopUpComplete, setIsTopUpComplete] = useState(false);
-  const [walletId] = useState("FINW-" + Math.random().toString(36).substring(2, 10).toUpperCase());
+  const [walletId] = useState(
+    "FINW-" + Math.random().toString(36).substring(2, 10).toUpperCase()
+  );
 
   // Generate a reference ID when the component mounts
   useEffect(() => {
@@ -69,36 +71,59 @@ export default function TopUpWallet() {
   };
 
   // Process the top-up request
-  const processTopUp = () => {
+  const processTopUp = async () => {
     if (!amount || parseInt(amount) <= 0) {
       Alert.alert("Invalid Amount", "Please enter a valid amount to top up");
       return;
     }
-
     setIsProcessing(true);
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const response = await api.post("/pay", {
+        amount: amount,
+        virtual_account_number: user?.wallet?.virtual_account_number,
+      });
+
       setIsProcessing(false);
       setIsTopUpComplete(true);
-      
-      // Show success message
-      Alert.alert(
-        "Top-Up Initiated",
-        `Your top-up request of ₦${formatAmount(amount)} has been initiated. It will be processed shortly.`,
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              // Reset form and generate new reference ID
-              setAmount("");
-              generateReferenceId();
-              setIsTopUpComplete(false);
-            },
+
+      console.log(response.data);
+
+      if(response.status === 200){ 
+
+        // Update the user's wallet balance
+        const newBalance = response.data.new_balance; // Assuming this is the new balance returned from the API
+        // Call updateUserProfile to update the wallet balance
+        await updateUserProfile({
+          wallet: {
+            virtual_account_number: user?.wallet?.virtual_account_number || "", 
+            balance: newBalance,
           },
-        ]
-      );
-    }, 2000);
+        });
+        
+        Alert.alert(
+          "Top-Up Initiated",
+          `Your top-up request of ₦${formatAmount(
+            amount
+          )} has been initiated. It will be processed shortly.`,
+          [
+            {
+              text: "OK",
+              onPress: () => {
+                // Reset form and generate new reference ID
+                setAmount("");
+                generateReferenceId();
+                setIsTopUpComplete(false);
+              },
+            },
+          ]
+        );
+      } 
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   // Navigate back
@@ -109,7 +134,7 @@ export default function TopUpWallet() {
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={goBack} style={styles.backButton}>
@@ -119,31 +144,48 @@ export default function TopUpWallet() {
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Wallet Balance Card */}
-        <Animated.View entering={FadeInDown.delay(100).duration(500)} style={styles.balanceCard}>
+        <Animated.View
+          entering={FadeInDown.delay(100).duration(500)}
+          style={styles.balanceCard}
+        >
           <Text style={styles.balanceLabel}>Current Balance</Text>
-          <Text style={styles.balanceAmount}>₦{balance}</Text>
+          <Text style={styles.balanceAmount}>₦{formatAmount(user?.wallet?.balance?.toString() || "0")}</Text>
           <View style={styles.walletIdContainer}>
             <Text style={styles.walletIdLabel}>Wallet ID:</Text>
             <Text style={styles.walletId}>{walletId}</Text>
-            <TouchableOpacity onPress={() => copyToClipboard(walletId, "Wallet ID")}>
+            <TouchableOpacity
+              onPress={() => copyToClipboard(walletId, "Wallet ID")}
+            >
               <Ionicons name="copy-outline" size={18} color="#fff" />
             </TouchableOpacity>
           </View>
         </Animated.View>
 
         {/* Top-Up Description */}
-        <Animated.View entering={FadeInDown.delay(200).duration(500)} style={styles.descriptionContainer}>
-          <Text style={styles.descriptionTitle}>Top-Up Your Virtual Wallet</Text>
+        <Animated.View
+          entering={FadeInDown.delay(200).duration(500)}
+          style={styles.descriptionContainer}
+        >
+          <Text style={styles.descriptionTitle}>
+            Top-Up Your Virtual Wallet
+          </Text>
           <Text style={styles.descriptionText}>
-            Easily add funds to your virtual wallet and manage your transactions securely. 
-            Choose from multiple payment options and get instant top-ups.
+            Easily add funds to your virtual wallet and manage your transactions
+            securely. Choose from multiple payment options and get instant
+            top-ups.
           </Text>
         </Animated.View>
 
         {/* Amount Input */}
-        <Animated.View entering={FadeInDown.delay(300).duration(500)} style={styles.amountContainer}>
+        <Animated.View
+          entering={FadeInDown.delay(300).duration(500)}
+          style={styles.amountContainer}
+        >
           <Text style={styles.sectionTitle}>Enter Amount</Text>
           <View style={styles.amountInputContainer}>
             <Text style={styles.currencySymbol}>₦</Text>
@@ -163,7 +205,10 @@ export default function TopUpWallet() {
         </Animated.View>
 
         {/* Payment Methods */}
-        <Animated.View entering={FadeInDown.delay(400).duration(500)} style={styles.methodsContainer}>
+        <Animated.View
+          entering={FadeInDown.delay(400).duration(500)}
+          style={styles.methodsContainer}
+        >
           <Text style={styles.sectionTitle}>Select Payment Method</Text>
           <View style={styles.methodsGrid}>
             <TouchableOpacity
@@ -187,29 +232,6 @@ export default function TopUpWallet() {
                 Bank Transfer
               </Text>
             </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.methodCard,
-                selectedMethod === "card" && styles.selectedMethodCard,
-              ]}
-              onPress={() => setSelectedMethod("card")}
-            >
-              <Ionicons
-                name="card-outline"
-                size={24}
-                color={selectedMethod === "card" ? "#5B37B7" : "#666"}
-              />
-              <Text
-                style={[
-                  styles.methodText,
-                  selectedMethod === "card" && styles.selectedMethodText,
-                ]}
-              >
-                Debit Card
-              </Text>
-            </TouchableOpacity>
-
             <TouchableOpacity
               style={[
                 styles.methodCard,
@@ -235,50 +257,78 @@ export default function TopUpWallet() {
         </Animated.View>
 
         {/* Payment Method Details */}
-        <Animated.View entering={FadeInDown.delay(500).duration(500)} style={styles.detailsContainer}>
+        <Animated.View
+          entering={FadeInDown.delay(500).duration(500)}
+          style={styles.detailsContainer}
+        >
           {selectedMethod === "bank" && (
             <View style={styles.bankDetails}>
               <Text style={styles.detailsTitle}>Bank Transfer Details</Text>
-              
+
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Account Name:</Text>
                 <View style={styles.detailValueContainer}>
-                  <Text style={styles.detailValue}>{BANK_DETAILS.accountName}</Text>
-                  <TouchableOpacity onPress={() => copyToClipboard(BANK_DETAILS.accountName, "Account Name")}>
+                  <Text style={styles.detailValue}>
+                    {user?.user.first_name} {user?.user.last_name}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() =>
+                      copyToClipboard(
+                        user?.user.first_name + " " + user?.user.last_name,
+                        "Account Name"
+                      )
+                    }
+                  >
                     <Ionicons name="copy-outline" size={18} color="#5B37B7" />
                   </TouchableOpacity>
                 </View>
               </View>
-              
+
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Account Number:</Text>
                 <View style={styles.detailValueContainer}>
-                  <Text style={styles.detailValue}>{BANK_DETAILS.accountNumber}</Text>
-                  <TouchableOpacity onPress={() => copyToClipboard(BANK_DETAILS.accountNumber, "Account Number")}>
+                  <Text style={styles.detailValue}>
+                    {user?.wallet?.virtual_account_number}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() =>
+                      copyToClipboard(
+                        BANK_DETAILS.accountNumber,
+                        "Account Number"
+                      )
+                    }
+                  >
                     <Ionicons name="copy-outline" size={18} color="#5B37B7" />
                   </TouchableOpacity>
                 </View>
               </View>
-              
+
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Bank:</Text>
                 <Text style={styles.detailValue}>{BANK_DETAILS.bankName}</Text>
               </View>
-              
+
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Reference:</Text>
                 <View style={styles.detailValueContainer}>
                   <Text style={styles.detailValue}>{referenceId}</Text>
-                  <TouchableOpacity onPress={() => copyToClipboard(referenceId, "Reference ID")}>
+                  <TouchableOpacity
+                    onPress={() => copyToClipboard(referenceId, "Reference ID")}
+                  >
                     <Ionicons name="copy-outline" size={18} color="#5B37B7" />
                   </TouchableOpacity>
                 </View>
               </View>
-              
+
               <View style={styles.noteContainer}>
-                <Ionicons name="information-circle-outline" size={18} color="#666" />
+                <Ionicons
+                  name="information-circle-outline"
+                  size={18}
+                  color="#666"
+                />
                 <Text style={styles.noteText}>
-                  Please use the reference ID as your payment narration when making the transfer.
+                  Please use the reference ID as your payment narration when
+                  making the transfer.
                 </Text>
               </View>
             </View>
@@ -288,12 +338,18 @@ export default function TopUpWallet() {
             <View style={styles.cardDetails}>
               <Text style={styles.detailsTitle}>Card Payment</Text>
               <Text style={styles.cardInstructions}>
-                You'll be redirected to our secure payment gateway to complete your card payment.
+                You'll be redirected to our secure payment gateway to complete
+                your card payment.
               </Text>
               <View style={styles.noteContainer}>
-                <Ionicons name="information-circle-outline" size={18} color="#666" />
+                <Ionicons
+                  name="information-circle-outline"
+                  size={18}
+                  color="#666"
+                />
                 <Text style={styles.noteText}>
-                  Your card details are securely processed and not stored on our servers.
+                  Your card details are securely processed and not stored on our
+                  servers.
                 </Text>
               </View>
             </View>
@@ -302,25 +358,37 @@ export default function TopUpWallet() {
           {selectedMethod === "ussd" && (
             <View style={styles.ussdDetails}>
               <Text style={styles.detailsTitle}>USSD Payment</Text>
-              
+
               <View style={styles.ussdCodeContainer}>
-                <Text style={styles.ussdCode}>*919*4*{BANK_DETAILS.accountNumber}*{amount || "AMOUNT"}#</Text>
-                <TouchableOpacity 
-                  onPress={() => copyToClipboard(`*919*4*${BANK_DETAILS.accountNumber}*${amount}#`, "USSD Code")}
+                <Text style={styles.ussdCode}>
+                  *919*4*{BANK_DETAILS.accountNumber}*{amount || "AMOUNT"}#
+                </Text>
+                <TouchableOpacity
+                  onPress={() =>
+                    copyToClipboard(
+                      `*919*4*${BANK_DETAILS.accountNumber}*${amount}#`,
+                      "USSD Code"
+                    )
+                  }
                   disabled={!amount}
                 >
                   <Ionicons name="copy-outline" size={18} color="#5B37B7" />
                 </TouchableOpacity>
               </View>
-              
+
               <Text style={styles.ussdInstructions}>
                 Dial the USSD code above on your phone to complete the payment.
               </Text>
-              
+
               <View style={styles.noteContainer}>
-                <Ionicons name="information-circle-outline" size={18} color="#666" />
+                <Ionicons
+                  name="information-circle-outline"
+                  size={18}
+                  color="#666"
+                />
                 <Text style={styles.noteText}>
-                  USSD code shown is for First Bank. Codes may vary for other banks.
+                  USSD code shown is for First Bank. Codes may vary for other
+                  banks.
                 </Text>
               </View>
             </View>
@@ -328,12 +396,15 @@ export default function TopUpWallet() {
         </Animated.View>
 
         {/* Processing Time */}
-        <Animated.View entering={FadeInDown.delay(600).duration(500)} style={styles.processingContainer}>
+        <Animated.View
+          entering={FadeInDown.delay(600).duration(500)}
+          style={styles.processingContainer}
+        >
           <Text style={styles.processingTitle}>Processing Time</Text>
           <View style={styles.processingRow}>
             <Ionicons name="time-outline" size={18} color="#666" />
             <Text style={styles.processingText}>
-              {selectedMethod === "bank" 
+              {selectedMethod === "bank"
                 ? "Bank transfers typically reflect within 5-30 minutes."
                 : selectedMethod === "card"
                 ? "Card payments are processed instantly."
@@ -343,9 +414,15 @@ export default function TopUpWallet() {
         </Animated.View>
 
         {/* Action Button */}
-        <Animated.View entering={FadeInDown.delay(700).duration(500)} style={styles.actionContainer}>
+        <Animated.View
+          entering={FadeInDown.delay(700).duration(500)}
+          style={styles.actionContainer}
+        >
           <TouchableOpacity
-            style={[styles.actionButton, (!amount || isProcessing) && styles.disabledButton]}
+            style={[
+              styles.actionButton,
+              (!amount || isProcessing) && styles.disabledButton,
+            ]}
             onPress={processTopUp}
             disabled={!amount || isProcessing}
           >
@@ -353,8 +430,8 @@ export default function TopUpWallet() {
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={styles.actionButtonText}>
-                {selectedMethod === "bank" 
-                  ? "I've Made The Transfer" 
+                {selectedMethod === "bank"
+                  ? "I've Made The Transfer"
                   : selectedMethod === "card"
                   ? "Proceed To Card Payment"
                   : "Confirm USSD Payment"}
@@ -524,7 +601,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   methodCard: {
-    width: "30%",
+    width: "45%",
     padding: 15,
     borderRadius: 10,
     backgroundColor: COLORS.gray100,

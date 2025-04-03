@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import LottieView from 'lottie-react-native';
 
 // Constants      
 import { COLORS, FONT, SIZES } from '@/constants/theme';
@@ -71,11 +72,15 @@ const OnboardingScreen = () => {
   const renderItem = ({ item }: { item: typeof ONBOARDING_DATA[0] }) => {
     return (
       <View style={[styles.slide, { width }]}>
-        <Image
-          source={item.image}
-          style={styles.image}
-          resizeMode="contain"
-        />
+        <LottieView
+            source={item.animation}
+            autoPlay
+            loop
+            style={{
+              width: 400,
+              height: 400,
+            }}
+          />
         <View style={styles.textContainer}>
           <Text style={styles.title}>{item.title}</Text>
           <Text style={styles.description}>{item.description}</Text>
@@ -88,12 +93,12 @@ const OnboardingScreen = () => {
     if (currentIndex < ONBOARDING_DATA.length - 1) {
       scrollTo(currentIndex + 1);
     } else {
-      router.replace('/(auth)/login');
+      router.replace('/(auth)/signup');
     }
   };
 
   const handleSkip = () => {
-    router.replace('/(tabs)');
+    router.replace('/(auth)/signup');
   };
 
   return (

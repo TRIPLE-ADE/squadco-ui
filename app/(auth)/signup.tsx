@@ -47,6 +47,7 @@ const SignUpScreen = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isloading, setIsLoading] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
 
   const {
     control,
@@ -73,8 +74,8 @@ const SignUpScreen = () => {
   const handleSignUp = async (data: any) => {
     setIsLoading(true);
     try {
-        // TODO: Implement actual login logic
-        await new Promise(resolve => setTimeout(resolve, 1500)); // Simulated delay
+      // TODO: Implement actual login logic
+      await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulated delay
       // const response = await api.post("auth/create-user/", data);
 
       Toast.success("Account created successfully! 🎉");
@@ -236,11 +237,27 @@ const SignUpScreen = () => {
               />
             )}
           />
-          <Text style={styles.sectionTitle}>Contributors</Text>
-          <Text style={styles.description}>
-            Contributors are individuals who support your financial journey by
-            contributing funds. You can add family members, friends, or mentors.
-          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Text style={styles.sectionTitle}>Contributors</Text>
+            <TouchableOpacity
+              onPress={() => setShowInfo(!showInfo)}
+              style={{ marginLeft: 5 }}
+            >
+              <Ionicons
+                name="information-circle-outline"
+                size={20}
+                color={COLORS.primary} 
+              />
+            </TouchableOpacity>
+          </View>
+
+          {showInfo && (
+            <Text style={styles.description}>
+              Contributors are individuals who support your financial journey by
+              contributing funds. You can add family members, friends, or
+              mentors.
+            </Text>
+          )}
 
           {fields.map((item, index) => (
             <View key={item.id} style={styles.contributorContainer}>
@@ -299,7 +316,17 @@ const SignUpScreen = () => {
             <Text style={styles.addButton}>+ Add Contributor</Text>
           </TouchableOpacity>
         </View>
-        <Button title="Create Account" loading={isloading} onPress={handleSubmit(handleSignUp)} />
+        <Button
+          title="Create Account"
+          loading={isloading}
+          onPress={handleSubmit(handleSignUp)}
+        />
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Already have an account?</Text>
+          <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
+            <Text style={styles.footerLink}>Sign In</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -307,7 +334,7 @@ const SignUpScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  contentContainer: { padding: SIZES.large },
+  contentContainer: { padding: SIZES.large,  },
   header: { marginBottom: SIZES.large },
   title: { fontFamily: FONT.bold, fontSize: SIZES.xxLarge },
   form: {
@@ -321,7 +348,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: FONT.bold,
     fontSize: SIZES.large,
-    marginTop: SIZES.large,
   },
   description: {
     fontSize: SIZES.medium,
@@ -334,6 +360,24 @@ const styles = StyleSheet.create({
     color: COLORS.error,
     fontWeight: "bold",
     marginTop: SIZES.small,
+  },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: SIZES.large,
+    marginBottom: 100,
+  },
+  footerText: {
+    fontFamily: FONT.regular,
+    fontSize: SIZES.medium,
+    color: COLORS.gray500,
+    marginRight: SIZES.small,
+  },
+  footerLink: {
+    fontFamily: FONT.medium,
+    fontSize: SIZES.medium,
+    color: COLORS.primary,
   },
 });
 

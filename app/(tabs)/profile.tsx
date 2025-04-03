@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONT, SIZES, SHADOWS } from '../../constants/theme';
+import { useAuth } from '@/context/auth-context';
 
 // Dummy data
 const USER_PROFILE = {
@@ -54,6 +55,7 @@ const MENU_ITEMS = [
 ];
 
 const ProfileScreen = () => {
+  const { logout } = useAuth();
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
@@ -112,10 +114,7 @@ const ProfileScreen = () => {
         {/* Logout Button */}
         <TouchableOpacity
           style={styles.logoutButton}
-          onPress={() => {
-            // TODO: Implement logout logic
-            router.replace('/auth');
-          }}
+          onPress={() => logout()}
         >
           <Ionicons name="log-out" size={24} color={COLORS.error} />
           <Text style={styles.logoutText}>Logout</Text>

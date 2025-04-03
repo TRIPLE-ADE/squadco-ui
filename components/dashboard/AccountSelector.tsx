@@ -61,16 +61,6 @@ const BANKS: Bank[] = [
   { code: "000033", name: "eNaira" },
   { code: "000034", name: "Signature Bank" },
   { code: "000036", name: "Optimus Bank" },
-  // Add more banks as needed - this is a subset of the full list for brevity
-  { code: "090267", name: "Kuda Microfinance Bank" },
-  { code: "100004", name: "Opay Digital Services LTD" },
-  { code: "120003", name: "MoMo PSB" },
-  { code: "090551", name: "FairMoney Microfinance Bank" },
-  { code: "100033", name: "PalmPay Limited" },
-  { code: "000013", name: "GTBank Plc" },
-  { code: "000014", name: "Access Bank" },
-  { code: "000015", name: "Zenith Bank Plc" },
-  { code: "000016", name: "First Bank of Nigeria" },
 ]
 
 const RecipientAccountSelector: React.FC<RecipientAccountSelectorProps> = ({ onAccountSelected }) => {

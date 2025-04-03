@@ -48,7 +48,7 @@ const TransactionDetails = () => {
           { color: type === "income" ? COLORS.success : COLORS.error },
         ]}
       >
-        {type === "income" ? "+" : "-"}${amount}
+        {type === "income" ? "+" : "-"}₦{amount}
       </Text>
 
       {/* Additional Details */}
