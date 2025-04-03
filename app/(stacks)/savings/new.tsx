@@ -9,6 +9,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Modal,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,6 +18,15 @@ import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import { BodyScrollView } from "@/components/BodyScrollView";
+import { FlatList } from "react-native";
+
+const schools = [
+  { id: "1", name: "State University", isMerchant: true },
+  { id: "2", name: "City College", isMerchant: true },
+  { id: "3", name: "Technical Institute", isMerchant: false },
+  { id: "4", name: "Community College", isMerchant: false },
+  { id: "5", name: "Private Academy", isMerchant: true },
+];
 
 const NewSavings = () => {
   const router = useRouter();
@@ -28,6 +38,8 @@ const NewSavings = () => {
   const [goalName, setGoalName] = useState("");
   const [amount, setAmount] = useState("");
   const [vaultFunds, setVaultFunds] = useState(false);
+  const [dropdownVisible, setDropdownVisible] = useState(false);
+  const [selectedSchool, setSelectedSchool] = useState<string | null>(null);
 
   const handlePlanSelection = (plan: SetStateAction<string>) => {
     setSelectedPlan(plan);
@@ -53,7 +65,12 @@ const NewSavings = () => {
       amount,
       vaultFunds,
     });
-    router.back(); // Navigate back to the savings list
+    router.replace("/savings"); // Navigate back to the savings list
+  };
+
+  const handleSelectSchool = (school: any) => {
+    setSelectedSchool(school);
+    setDropdownVisible(false);
   };
 
   return (
@@ -61,8 +78,18 @@ const NewSavings = () => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
+        {/* Header */}
+      {/* <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>New Savings Plan</Text>
+        <View style={{ width: 24 }} />
+      </View> */}
       <BodyScrollView contentContainerStyle={styles.scrollContent}>
-      <Text style={styles.title}>Set Up Your Savings Plan for Future Goals</Text>
+        <Text style={styles.title}>
+          Set Up Your Savings Plan for Future Goals
+        </Text>
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity
@@ -118,13 +145,71 @@ const NewSavings = () => {
         {selectedPlan === "schoolFees" && (
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Select School:</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Search for school..."
-              value={school}
-              onChangeText={setSchool}
-            />
-            <View style={styles.switchContainer}>
+            <TouchableOpacity
+              style={styles.dropdown}
+              onPress={() => setDropdownVisible(true)}
+            >
+              <Text
+                style={
+                  selectedSchool
+                    ? styles.dropdownText
+                    : styles.dropdownPlaceholder
+                }
+              >
+                {selectedSchool ? selectedSchool.name : "Select a school"}
+              </Text>
+              <Ionicons name="chevron-down" size={20} color={COLORS.gray500} />
+            </TouchableOpacity>
+
+            {/* Dropdown Modal */}
+            <Modal
+              visible={dropdownVisible}
+              transparent={true}
+              animationType="slide"
+              onRequestClose={() => setDropdownVisible(false)}
+            >
+              <TouchableOpacity
+                style={styles.modalOverlay}
+                activeOpacity={1}
+                onPress={() => setDropdownVisible(false)}
+              >
+                <View style={styles.modalContent}>
+                  <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>Select School</Text>
+                    <TouchableOpacity onPress={() => setDropdownVisible(false)}>
+                      <Ionicons name="close" size={24} color={COLORS.text} />
+                    </TouchableOpacity>
+                  </View>
+                  <FlatList
+                    data={schools}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={styles.schoolItem}
+                        onPress={() => handleSelectSchool(item)}
+                      >
+                        <Text style={styles.schoolName}>{item.name}</Text>
+                      </TouchableOpacity>
+                    )}
+                    ItemSeparatorComponent={() => (
+                      <View style={styles.separator} />
+                    )}
+                  />
+                </View>
+              </TouchableOpacity>
+            </Modal>
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Amount:</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter amount"
+                value={amount}
+                onChangeText={setAmount}
+                keyboardType="numeric"
+              />
+            </View>
+
+            {/* <View style={styles.switchContainer}>
               <Text style={styles.label}>Auto-Payment:</Text>
               <Switch
                 value={autoPayment}
@@ -132,7 +217,7 @@ const NewSavings = () => {
                 trackColor={{ false: COLORS.gray300, true: COLORS.primary }}
                 thumbColor={autoPayment ? COLORS.white : COLORS.gray100}
               />
-            </View>
+            </View> */}
             <Text style={styles.label}>Deadline:</Text>
             <TouchableOpacity
               style={styles.datePickerButton}
@@ -216,6 +301,23 @@ const styles = StyleSheet.create({
     paddingTop: 32,
     gap: 24,
   },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
+    backgroundColor: "#fff",
+  },
+  backButton: {
+    padding: 5,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+  },
   title: {
     fontSize: SIZES.xLarge,
     fontWeight: "bold",
@@ -295,6 +397,84 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: SIZES.medium,
     fontWeight: "bold",
+  },
+  dropdown: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: COLORS.gray300,
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: COLORS.white,
+  },
+  dropdownText: {
+    fontSize: 16,
+    color: COLORS.text,
+  },
+  dropdownPlaceholder: {
+    fontSize: 16,
+    color: COLORS.gray500,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    maxHeight: "70%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray200,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: COLORS.text,
+  },
+  schoolItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+  },
+  schoolName: {
+    fontSize: 16,
+    color: COLORS.text,
+  },
+  merchantBadge: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  merchantText: {
+    fontSize: 12,
+    color: COLORS.white,
+    fontWeight: "bold",
+  },
+  separator: {
+    height: 1,
+    backgroundColor: COLORS.gray200,
+  },
+  accountDetailsContainer: {
+    marginTop: 16,
+    padding: 16,
+    backgroundColor: COLORS.primary,
+    borderRadius: 8,
+  },
+  accountDetailsTitle: {
+    fontSize: 14,
+    color: COLORS.white,
+    marginBottom: 12,
   },
 });
 

@@ -21,6 +21,7 @@ import Input from '@/components/common/Input';
 
 // Context
 import { useAuth } from '@/context/auth-context';
+import { Toast } from 'toastify-react-native';
 
 interface FormData {
   email: string;
@@ -38,9 +39,9 @@ const LoginScreen = () => {
     email: '',
     password: '',
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   const [errors, setErrors] = useState<FormErrors>({});
-  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const validateForm = () => {
@@ -61,18 +62,16 @@ const LoginScreen = () => {
   };
 
   const handleLogin = async () => {
+    setIsLoading(true);
     if (!validateForm()) return;
-
-    setLoading(true);
     try {
-      // TODO: Implement actual login logic
-      // await new Promise(resolve => setTimeout(resolve, 1500)); // Simulated delay
       await login(formData.email, formData.password);
+      Toast.success('Login successful! Redirecting...');
     } catch (error) {
       console.error('Login error:', error);
-      // Handle error appropriately
+      Toast.error('Invalid email or password');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -136,7 +135,7 @@ const LoginScreen = () => {
         <Button
           title="Log In"
           onPress={handleLogin}
-          loading={loading}
+          loading={isLoading}
           style={styles.button}
         />
 
@@ -161,6 +160,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: SIZES.large,
+    paddingBottom: 100,
   },
   header: {
     marginTop: SIZES.xxLarge,

@@ -103,7 +103,7 @@ const SchoolFeesScreen = () => {
               <View
                 style={[
                   styles.progressFill,
-                  { width: `${Math.min(progress, 100)}%` },
+                  { width: `₦{Math.min(progress, 100)}%` },
                 ]}
               />
             </View>

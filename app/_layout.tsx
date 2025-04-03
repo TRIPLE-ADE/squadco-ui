@@ -43,7 +43,7 @@ export default function RootLayout() {
       <AuthProvider>
         <Slot />
         <StatusBar style="auto" />
-        <ToastManager textStyle={{ fontSize: 16, fontWeight: 'bold' }} style={{height: 'auto'}} />
+        <ToastManager textStyle={{ fontSize: 16, fontWeight: 'bold' }} style={{height: 'auto', width: '90%'}} />
       </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>

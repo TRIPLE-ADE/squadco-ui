@@ -5,9 +5,10 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   Alert,
   RefreshControl,
+  Modal,
+  TextInput,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -16,51 +17,80 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { PieChart, ProgressChart } from "react-native-chart-kit";
 import { Dimensions } from "react-native";
 import { COLORS, FONT, SIZES } from "@/constants/theme";
+import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import { formatAmount } from "@/utils/helper";
+import { useAuth } from "@/context/auth-context";
 
 const { width } = Dimensions.get("window");
 
 export default function Savings() {
   const router = useRouter();
+  const { user, updateUserProfile } = useAuth();
   const [goalName, setGoalName] = useState("");
   const [goalAmount, setGoalAmount] = useState("");
   const [goalDate, setGoalDate] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("all");
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showPicker, setShowPicker] = useState(false);
+  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [savingsGoals, setSavingsGoals] = useState([
     {
       id: "1",
-      name: "Laptop Fund",
-      currentAmount: 750,
-      targetAmount: 1000,
+      name: "School Fees",
+      currentAmount: 100000,
+      targetAmount: 250000,
       deadline: "2025-12-31",
       progress: 0.75,
     },
     {
-      id: "2",
-      name: "Spring Break Trip",
-      currentAmount: 300,
-      targetAmount: 600,
-      deadline: "2025-03-15",
-      progress: 0.5,
-    },
-    {
-      id: "3",
-      name: "Emergency Fund",
-      currentAmount: 450,
-      targetAmount: 1500,
-      deadline: "2025-06-10",
-      progress: 0.3,
-    },
-    {
-      id: "4",
-      name: "Vacation Fund",
-      currentAmount: 2000,
-      targetAmount: 2000,
-      deadline: "2025-09-15",
-      progress: 1,
-    },
+      id: "7",
+      name: "Handout Fund",
+      currentAmount: 10000,
+      targetAmount: 25000,
+      deadline: "2025-12-31",
+      progress: 0.75,
+    }
   ]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedGoal, setSelectedGoal] = useState(null);
+  const [transferAmount, setTransferAmount] = useState("");
 
+  const calculateFutureGrowth = (goalId: string, selectedDate: Date) => {
+    const today = new Date();
+    const futureDate = new Date(selectedDate);
+    const interestRate = 0.05;
+
+
+    // Find the goal by ID
+    const goal = savingsGoals.find((g) => g.id === goalId);
+    if (!goal) {
+      Alert.alert("Error", "Goal not found");
+      return;
+    }
+  
+
+    const years =
+      (futureDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 365);
+    const initialAmount = goal.currentAmount; // Get the initial amount from the goal
+
+    const futureValue = initialAmount * Math.pow(1 + interestRate, years);
+    
+    Alert.alert(
+      "Projected Savings Growth",
+      `By ${futureDate.toDateString()}, your savings for "${goal.name}" will be ₦100,400`
+    );
+  };
+
+  const onChange = (event: DateTimePickerEvent, date: Date | undefined) => {
+    setShowPicker(false);
+    if (date && date instanceof Date && selectedGoalId) { 
+      setSelectedDate(date);
+      calculateFutureGrowth(selectedGoalId, selectedDate);
+    }
+  };
+
+  
   const totalSaved = savingsGoals.reduce(
     (sum, goal) => sum + goal.currentAmount,
     0
@@ -83,7 +113,7 @@ export default function Savings() {
     if (selectedFilter === "active") {
       return goal.currentAmount < goal.targetAmount;
     }
-    return true; 
+    return true;
   });
 
   const chartConfig = {
@@ -94,6 +124,47 @@ export default function Savings() {
     barPercentage: 0.5,
     useShadowColorFromDataset: false,
   };
+
+  const handleAddFunds = (goal: { id: string; name: string; currentAmount: number; targetAmount: number; deadline: string; progress: number; }) => {
+    setSelectedGoal(goal);
+    setModalVisible(true);
+  };
+
+  const handleTransfer = async () => {
+    const amount = parseFloat(transferAmount);
+    if (!amount || amount <= 0) {
+      Alert.alert("Invalid Amount", "Please enter a valid amount to transfer.");
+      return;
+    }
+
+    // Update the selected goal's current amount
+    filteredGoals.map((goal) => {
+      if (goal.id === selectedGoal.id) {
+        return {
+          ...goal,
+          currentAmount: goal.currentAmount + amount,
+        };
+      }
+      return goal;
+    });
+
+    const newBalance = (user?.wallet?.balance ?? 0) - amount;
+
+    // Update the user's profile with the new savings goals
+    await updateUserProfile({
+      ...user,
+      wallet: {
+        balance: newBalance,
+        virtual_account_number: user?.wallet?.virtual_account_number || "",
+      },
+    });
+
+
+    Alert.alert("Success", `₦${amount} has been transferred to ${selectedGoal.name}.`);
+    setTransferAmount("");
+    setModalVisible(false);
+  };
+
 
   const handleAddGoal = () => {
     if (!goalName || !goalAmount || !goalDate) {
@@ -148,7 +219,7 @@ export default function Savings() {
         <Text style={styles.headerTitle}>Savings Goals</Text>
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() => router.push('/(stacks)/savings/new')}
+          onPress={() => router.push("/(stacks)/savings/new")}
           accessibilityLabel="Add Savings Goal"
           accessibilityHint="Opens a form to add a new savings goal"
         >
@@ -196,7 +267,7 @@ export default function Savings() {
           style={styles.overviewCard}
         >
           <Text style={styles.overviewTitle}>Total Savings</Text>
-          <Text style={styles.overviewAmount}>N{totalSaved.toFixed(2)}</Text>
+          <Text style={styles.overviewAmount}>₦{formatAmount(totalSaved.toFixed(2))}</Text>
           <View style={styles.overviewDetails}>
             <View style={styles.overviewItem}>
               <Text style={styles.overviewItemLabel}>Goals</Text>
@@ -228,7 +299,7 @@ export default function Savings() {
             />
           </View>
           <Text style={styles.summarySubtitle}>
-            ${totalSaved.toFixed(2)} of ${totalTarget.toFixed(2)} saved
+          ₦{formatAmount(totalSaved.toFixed(2))} of ₦{formatAmount(totalTarget.toFixed(2))} saved
           </Text>
         </Animated.View>
 
@@ -252,7 +323,6 @@ export default function Savings() {
             />
           </View>
         </Animated.View>
-
         <View style={styles.goalsSection}>
           <Text style={styles.sectionTitle}>Your Goals</Text>
           {filteredGoals.map((goal, index) => (
@@ -277,10 +347,10 @@ export default function Savings() {
               <View style={styles.goalProgress}>
                 <View style={styles.progressInfo}>
                   <Text style={styles.currentAmount}>
-                    ${goal.currentAmount.toFixed(2)}
+                    ₦{formatAmount(goal.currentAmount.toFixed(2))}
                   </Text>
                   <Text style={styles.targetAmount}>
-                    of ${goal.targetAmount.toFixed(2)}
+                    of ₦{formatAmount(goal.targetAmount.toFixed(2))}
                   </Text>
                 </View>
                 <View style={styles.progressBarContainer}>
@@ -309,18 +379,19 @@ export default function Savings() {
                     {Math.round(goal.progress * 100)}%
                   </Text>
                 </View>
-                <TouchableOpacity style={styles.addFundsButton}>
+                <TouchableOpacity style={styles.addFundsButton} onPress={() => handleAddFunds(goal)}>
                   <Text style={styles.addFundsButtonText}>Add Funds</Text>
                 </TouchableOpacity>
               </View>
               <Text style={styles.goalDeadline}>
-                Due: {new Intl.DateTimeFormat('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                }).format(new Date(goal.deadline))} - {" "}
-                {daysLeft[savingsGoals.findIndex((g) => g.id === goal.id)]} days
-                left
+                Due:{" "}
+                {new Intl.DateTimeFormat("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                }).format(new Date(goal.deadline))}{" "}
+                - {daysLeft[savingsGoals.findIndex((g) => g.id === goal.id)]}{" "}
+                days left
               </Text>
               <View style={styles.iconContainer}>
                 <Ionicons
@@ -340,10 +411,65 @@ export default function Savings() {
                   {goal.progress >= 1 ? "Goal Achieved!" : "On Track"}
                 </Text>
               </View>
+              <Text style={styles.title}>Investment Growth Calculator</Text>
+              <Text>
+                Click the button below to calculate the growth of your Savings
+                In the future
+              </Text>
+              
+              <TouchableOpacity
+                style={styles.dateButton}
+                onPress={() => {
+                  setShowPicker(true);
+
+                  setSelectedGoalId(goal.id);
+                }}
+              >
+                <Text style={styles.dateButtonText}>Select Date</Text>
+              </TouchableOpacity>
+              {showPicker && (
+                <DateTimePicker
+                  value={selectedDate}
+                  mode="date"
+                  display="default"
+                  onChange={onChange}
+                />
+              )}
             </Animated.View>
           ))}
         </View>
-
+           {/* Modal for Adding Funds */}
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Add Funds to {selectedGoal?.name}</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Enter amount"
+              keyboardType="numeric"
+              value={transferAmount}
+              onChangeText={setTransferAmount}
+            />
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={handleTransfer}
+            >
+              <Text style={styles.modalButtonText}>Transfer</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.modalCloseButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
         <Animated.View
           entering={FadeInDown.delay(500).duration(500)}
           style={styles.tipsCard}
@@ -474,6 +600,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     flexDirection: "row",
     alignItems: "center",
+    marginBottom: 20,
   },
   status: {
     fontFamily: FONT.medium,
@@ -603,9 +730,9 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   filters: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: SIZES.medium,
     marginVertical: SIZES.xSmall,
   },
@@ -627,4 +754,92 @@ const styles = StyleSheet.create({
   filterTextActive: {
     color: COLORS.white,
   },
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  dateButton: {
+    backgroundColor: COLORS.primary,
+    padding: 10,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  dateButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  goalCard: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  goalName: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  currentAmount: {
+    fontSize: 16,
+    color: "#666",
+  },
+  addFundsButton: {
+    backgroundColor: "#5B37B7",
+    padding: 10,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  addFundsButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    width: "80%",
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 15,
+  },
+  modalInput: {
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 15,
+  },
+  modalButton: {
+    backgroundColor: "#5B37B7",
+    padding: 10,
+    borderRadius: 5,
+    alignItems: "center",
+    width: "100%",
+  },
+  modalButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  modalCloseButton: {
+    marginTop: 10,
+  },
+  modalCloseButtonText: {
+    color: "#5B37B7",
+    fontWeight: "bold",
+  }, 
 });

@@ -291,7 +291,7 @@ const MonthlyRecapScreen = () => {
             <Ionicons name="trophy" size={64} color={COLORS.warning} />
             <Button
               title="View Detailed Report"
-              onPress={() => router.push('/dashboard/reports')}
+              onPress={() => router.push('/')}
               style={styles.reportButton}
             />
           </View>

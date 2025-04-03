@@ -43,7 +43,7 @@ export default function TransferScreen() {
     // In a real app, you would fetch the account name from an API
     // For demo purposes, we'll simulate a successful account name fetch
     setTimeout(() => {
-      setRecipientName("John Doe")
+      setRecipientName("Abdulrasheed Abdulsalam")
     }, 500)
   }
 

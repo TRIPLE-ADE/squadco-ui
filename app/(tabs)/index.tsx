@@ -17,18 +17,12 @@ import { BarChart, LineChart, PieChart } from "react-native-chart-kit";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { COLORS, FONT, SHADOWS, SIZES } from "@/constants/theme";
 import SavingsGoalCard from "@/components/dashboard/SavingsGoalCard";
+import { formatAmount } from "@/utils/helper";
 
 const { width } = Dimensions.get("window");
 
 // Dummy data for demonstration
 const DUMMY_SAVINGS_GOALS = [
-  {
-    id: "1",
-    title: "Laptop Fund",
-    targetAmount: 500000,
-    currentAmount: 350000,
-    deadline: new Date("2024-06-30"),
-  },
   {
     id: "2",
     title: "School Fees",
@@ -40,11 +34,10 @@ const DUMMY_SAVINGS_GOALS = [
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
   const [showBalance, setShowBalance] = useState(true);
   const [notificationCount, setNotificationCount] = useState<number>(5);
-
   const renderTransactionItem = ({
     item,
   }: {
@@ -85,7 +78,7 @@ export default function Dashboard() {
           { color: item.type === "income" ? COLORS.success : COLORS.error },
         ]}
       >
-        {item.type === "income" ? "+" : "-"}${item.amount}
+        {item.type === "income" ? "+" : "-"}₦{item.amount}
       </Text>
     </TouchableOpacity>
   );
@@ -182,7 +175,7 @@ export default function Dashboard() {
       <StatusBar style="dark" />
       <View style={styles.header}>
         <View>
-          <Text style={styles.greeting}>Hello, {user?.fullName || "User"}</Text>
+          <Text style={styles.greeting}>Hello, {user?.user.first_name || "User"}</Text>
           <Text style={styles.date}>
             {new Date().toLocaleDateString("en-US", {
               weekday: "long",
@@ -238,7 +231,7 @@ export default function Dashboard() {
             </TouchableOpacity>
           </View>
           <Text style={styles.balanceAmount}>
-            {showBalance ? "₦2,450.00" : "₦•••••••"}
+            {showBalance ? `₦${formatAmount(String(user?.wallet?.balance ?? 20000))}` : "₦•••••••"}
           </Text>
           <View style={styles.balanceFooter}>
             <View style={styles.balanceChange}>
@@ -458,8 +451,8 @@ export default function Dashboard() {
               <Text style={styles.insightTitle}>Smart Tip</Text>
             </View>
             <Text style={styles.insightText}>
-              Based on your spending patterns, you could save an additional $120
-              this month by reducing food delivery expenses.
+              By saving ₦1000 every day, you can save ₦365,000 in a year.
+              This is a great way to save money and achieve your financial goals.
             </Text>
             <TouchableOpacity style={styles.insightButton}>
               <Text style={styles.insightButtonText}>See More Insights</Text>

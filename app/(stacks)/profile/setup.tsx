@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react";
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
@@ -10,232 +9,252 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-} from "react-native"
-import { StatusBar } from "expo-status-bar"
-import { router } from "expo-router"
-import DateTimePicker from "@react-native-community/datetimepicker"
-import AsyncStorage from "@react-native-async-storage/async-storage"
-import { Ionicons } from "@expo/vector-icons"
-import { useAuth } from "@/context/auth-context"
-import { COLORS } from "@/constants/theme"
+  TextInput,
+} from "react-native";
+import { StatusBar } from "expo-status-bar";
+import { router } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "@/context/auth-context";
+import { COLORS } from "@/constants/theme";
+import { z } from "zod";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Input from "@/components/common/Input";
+import api from "@/services/api";
+import { Toast } from "toastify-react-native";
 
-// Mock API call for verification
-const verifyUserIdentity = async (userData: {
-  fullName: string
-  dateOfBirth: string
-  bvn: string
-}): Promise<{ success: boolean; message: string }> => {
-  // Simulate API call delay
-  await new Promise((resolve) => setTimeout(resolve, 2000))
+// Define the form schema with Zod
+const profileSetupSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  phone: z.string().min(10, "Phone number must be at least 10 digits"),
+  bvn: z.string().length(11, "BVN must be 11 digits"),
+  dob: z.string().min(1, "Date of birth is required"),
+  address: z.string().min(5, "Address is required"),
+  gender: z.enum(["0", "1"], {
+    errorMap: () => ({ message: "Please select 0 for female or 1 for male" }),
+  }),
+});
 
-  // For demo purposes, we'll validate the BVN format and return success
-  if (userData.bvn.length !== 11 || isNaN(Number(userData.bvn))) {
-    return { success: false, message: "Invalid BVN format" }
-  }
-
-  return { success: true, message: "Verification successful" }
-}
+type ProfileFormData = z.infer<typeof profileSetupSchema>;
 
 export default function ProfileSetupScreen() {
-  const { user } = useAuth()
-  const [fullName, setFullName] = useState("")
-  const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null)
-  const [bvn, setBvn] = useState("")
-  const [showDatePicker, setShowDatePicker] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [errors, setErrors] = useState<{
-    fullName?: string
-    dateOfBirth?: string
-    bvn?: string
-  }>({})
-  const [showPinSetup, setShowPinSetup] = useState(false)
+  const { user, updateUserProfile } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPinSetup, setShowPinSetup] = useState(false);
 
-  // Load saved form data if available
-  useEffect(() => {
-    const loadSavedData = async () => {
-      try {
-        const savedData = await AsyncStorage.getItem("profileSetupData")
-        if (savedData) {
-          const parsedData = JSON.parse(savedData)
-          setFullName(parsedData.fullName || "")
-          setDateOfBirth(parsedData.dateOfBirth ? new Date(parsedData.dateOfBirth) : null)
-          setBvn(parsedData.bvn || "")
-        }
-      } catch (error) {
-        console.error("Error loading saved data:", error)
-      }
-    }
+  // Initialize React Hook Form
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ProfileFormData>({
+    resolver: zodResolver(profileSetupSchema),
+    defaultValues: {
+      email: user?.user.email || "",
+      phone: "",
+      bvn: "",
+      dob: "",
+      address: "",
+      gender: "1",
+    },
+  });
 
-    loadSavedData()
-  }, [])
-
-  // Save form data to AsyncStorage
-  const saveFormData = async () => {
+  // Handle form submission
+  const onSubmit = async (data: ProfileFormData) => {
+    setIsLoading(true);
     try {
-      const dataToSave = {
-        fullName,
-        dateOfBirth: dateOfBirth?.toISOString(),
-        bvn,
-      }
-      await AsyncStorage.setItem("profileSetupData", JSON.stringify(dataToSave))
-    } catch (error) {
-      console.error("Error saving form data:", error)
-    }
-  }
-
-  // Validate form fields
-  const validateForm = () => {
-    const newErrors: {
-      fullName?: string
-      dateOfBirth?: string
-      bvn?: string
-    } = {}
-
-    if (!fullName.trim()) {
-      newErrors.fullName = "Full name is required"
-    }
-
-    if (!dateOfBirth) {
-      newErrors.dateOfBirth = "Date of birth is required"
-    } else {
-      // Check if user is at least 18 years old
-      const today = new Date()
-      const birthDate = new Date(dateOfBirth)
-      let age = today.getFullYear() - birthDate.getFullYear()
-      const monthDiff = today.getMonth() - birthDate.getMonth()
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--
-      }
-
-      if (age < 18) {
-        newErrors.dateOfBirth = "You must be at least 18 years old"
-      }
-    }
-
-    if (!bvn.trim()) {
-      newErrors.bvn = "BVN is required"
-    } else if (bvn.length !== 11 || !/^\d+$/.test(bvn)) {
-      newErrors.bvn = "BVN must be 11 digits"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(false)
-    if (selectedDate) {
-      setDateOfBirth(selectedDate)
-    }
-  }
-
-  const handleSubmit = async () => {
-    if (!validateForm()) {
-      return
-    }
-
-    // Save form data before submission
-    await saveFormData()
-
-    setIsLoading(true)
-    try {
-      const response = await verifyUserIdentity({
-        fullName,
-        dateOfBirth: dateOfBirth?.toISOString() || "",
-        bvn,
-      })
-
-      if (response.success) {
+      const response = await api.post("users/kyc/", data);
+      console.log(response.data);
+      if (response.data) {
         // Show PIN setup modal
-        setShowPinSetup(true)
+        Toast.success("Verification successful");
+        setShowPinSetup(true);
       } else {
-        Alert.alert("Verification Failed", response.message)
+        Toast.error("Verification Failed Please try again later");
       }
     } catch (error) {
-      Alert.alert("Error", "An unexpected error occurred. Please try again.")
-      console.error("Verification error:", error)
+      Toast.error("Verification Failed Please try again later");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
-
-  const formatDate = (date: Date | null) => {
-    if (!date) return ""
-    return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()}`
-  }
+  };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       <StatusBar style="dark" />
       <ScrollView style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Complete Your Profile</Text>
-          <Text style={styles.subtitle}>We need to verify your identity before you can access the app</Text>
+          <Text style={styles.subtitle}>
+            We need to verify your identity before you can access the app.
+            Ensure that your Date of Birth (DOB) matches the one on your BVN.
+            You will also need to provide a valid phone number.
+          </Text>
         </View>
 
         <View style={styles.form}>
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Full Name (as per BVN)</Text>
-            <TextInput
-              style={[styles.input, errors.fullName ? styles.inputError : null]}
-              placeholder="Enter your full name"
-              value={fullName}
-              onChangeText={setFullName}
-              autoCapitalize="words"
-            />
-            {errors.fullName ? <Text style={styles.errorText}>{errors.fullName}</Text> : null}
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Date of Birth</Text>
-            <TouchableOpacity
-              style={[styles.input, styles.dateInput, errors.dateOfBirth ? styles.inputError : null]}
-              onPress={() => setShowDatePicker(true)}
-            >
-              <Text style={[styles.dateText, !dateOfBirth && styles.placeholderText]}>
-                {dateOfBirth ? formatDate(dateOfBirth) : "Select your date of birth"}
-              </Text>
-              <Ionicons name="calendar-outline" size={20} color={COLORS.gray500} />
-            </TouchableOpacity>
-            {errors.dateOfBirth ? <Text style={styles.errorText}>{errors.dateOfBirth}</Text> : null}
-            {showDatePicker && (
-              <DateTimePicker
-                value={dateOfBirth || new Date()}
-                mode="date"
-                display="default"
-                onChange={handleDateChange}
-                maximumDate={new Date()}
+          {/* Email */}
+          <Controller
+            control={control}
+            name="email"
+            render={({ field }) => (
+              <Input
+                label="Email"
+                placeholder="Enter your email"
+                value={field.value}
+                onChangeText={field.onChange}
+                error={errors.email?.message}
+                keyboardType="email-address"
               />
             )}
-          </View>
+          />
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>BVN (Bank Verification Number)</Text>
-            <TextInput
-              style={[styles.input, errors.bvn ? styles.inputError : null]}
-              placeholder="Enter your 11-digit BVN"
-              value={bvn}
-              onChangeText={(text) => {
-                // Only allow digits
-                if (/^\d*$/.test(text)) {
-                  setBvn(text)
-                }
-              }}
-              keyboardType="numeric"
-              maxLength={11}
+          {/* Phone */}
+          <Controller
+            control={control}
+            name="phone"
+            render={({ field }) => (
+              <Input
+                label="Phone Number"
+                placeholder="Enter your phone number"
+                value={field.value}
+                onChangeText={(text) => {
+                  // Only allow digits
+                  if (/^\d*$/.test(text)) {
+                    field.onChange(text);
+                  }
+                }}
+                error={errors.phone?.message}
+                keyboardType="phone-pad"
+              />
+            )}
+          />
+
+          {/* BVN */}
+          <Controller
+            control={control}
+            name="bvn"
+            render={({ field }) => (
+              <Input
+                label="BVN (Bank Verification Number)"
+                placeholder="Enter your 11-digit BVN"
+                value={field.value}
+                onChangeText={(text) => {
+                  // Only allow digits
+                  if (/^\d*$/.test(text)) {
+                    field.onChange(text);
+                  }
+                }}
+                error={errors.bvn?.message}
+                keyboardType="numeric"
+              />
+            )}
+          />
+
+          {/* Date of Birth */}
+          <Controller
+            control={control}
+            name="dob"
+            render={({ field }) => (
+              <Input
+                label="Date of Birth"
+                placeholder="YYYY-MM-DD"
+                value={field.value}
+                onChangeText={field.onChange}
+                error={errors.dob?.message}
+              />
+            )}
+          />
+
+          {/* Address */}
+          <Controller
+            control={control}
+            name="address"
+            render={({ field }) => (
+              <Input
+                label="Address"
+                placeholder="Enter your address"
+                value={field.value}
+                onChangeText={field.onChange}
+                error={errors.address?.message}
+              />
+            )}
+          />
+
+          {/* Gender */}
+          <Controller
+            control={control}
+            name="gender"
+            render={({ field }) => (
+              <View style={styles.genderContainer}>
+                <Text style={styles.label}>Gender</Text>
+                <View style={styles.genderOptions}>
+                  <TouchableOpacity
+                    style={[
+                      styles.genderOption,
+                      field.value === "1" && styles.genderOptionSelected,
+                    ]}
+                    onPress={() => field.onChange("1")}
+                  >
+                    <Text
+                      style={[
+                        styles.genderText,
+                        field.value === "1" && styles.genderTextSelected,
+                      ]}
+                    >
+                      Male
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.genderOption,
+                      field.value === "0" && styles.genderOptionSelected,
+                    ]}
+                    onPress={() => field.onChange("0")}
+                  >
+                    <Text
+                      style={[
+                        styles.genderText,
+                        field.value === "0" && styles.genderTextSelected,
+                      ]}
+                    >
+                      Female
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                {errors.gender && (
+                  <Text style={styles.errorText}>{errors.gender.message}</Text>
+                )}
+              </View>
+            )}
+          />
+
+          <View style={styles.helperTextContainer}>
+            <Ionicons
+              name="information-circle-outline"
+              size={16}
+              color={COLORS.gray500}
             />
-            {errors.bvn ? <Text style={styles.errorText}>{errors.bvn}</Text> : null}
             <Text style={styles.helperText}>
-              Your BVN is a unique 11-digit number that identifies you in the Nigerian banking system
+              Your BVN is a unique 11-digit number that identifies you in the
+              Nigerian banking system
             </Text>
           </View>
 
           <TouchableOpacity
             style={[styles.button, isLoading && styles.buttonDisabled]}
-            onPress={handleSubmit}
+            onPress={handleSubmit(onSubmit)}
             disabled={isLoading}
           >
-            {isLoading ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.buttonText}>Verify Identity</Text>}
+            {isLoading ? (
+              <ActivityIndicator color={COLORS.white} />
+            ) : (
+              <Text style={styles.buttonText}>Verify Identity</Text>
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -245,83 +264,97 @@ export default function ProfileSetupScreen() {
         <TransactionPinSetup
           onClose={() => setShowPinSetup(false)}
           onComplete={() => {
-            // Clear saved form data after successful verification
-            AsyncStorage.removeItem("profileSetupData")
+            // Update user profile as verified
+            updateUserProfile({ is_verified: true });
             // Navigate to dashboard
-            router.replace("/(tabs)")
+            router.replace("/(tabs)");
           }}
         />
       )}
     </KeyboardAvoidingView>
-  )
+  );
 }
 
 // Transaction PIN Setup Component
-function TransactionPinSetup({ onClose, onComplete }: { onClose: () => void, onComplete: () => void }) {
-  const [pin, setPin] = useState("")
-  const [confirmPin, setConfirmPin] = useState("")
-  const [pinError, setPinError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [step, setStep] = useState(1) // 1 = enter pin, 2 = confirm pin
+function TransactionPinSetup({
+  onClose,
+  onComplete,
+}: {
+  onClose: () => void;
+  onComplete: () => void;
+}) {
+  const [pin, setPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [pinError, setPinError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [step, setStep] = useState(1); // 1 = enter pin, 2 = confirm pin
 
-  const handlePinChange = (text: string) => {
+  const handlePinChange = async (text: string) => {
     // Only allow digits
     if (/^\d*$/.test(text) && text.length <= 6) {
-      setPin(text)
-      setPinError("")
+      setPin(text);
+      setPinError("");
     }
-  }
+  };
 
   const handleConfirmPinChange = (text: string) => {
     // Only allow digits
     if (/^\d*$/.test(text) && text.length <= 6) {
-      setConfirmPin(text)
-      setPinError("")
+      setConfirmPin(text);
+      setPinError("");
     }
-  }
+  };
 
   const handleContinue = () => {
     if (pin.length < 4) {
-      setPinError("PIN must be at least 4 digits")
-      return
+      setPinError("PIN must be at least 4 digits");
+      return;
     }
-    setStep(2)
-  }
+    setStep(2);
+  };
 
   const handleSubmit = async () => {
     if (pin !== confirmPin) {
-      setPinError("PINs do not match")
-      return
+      setPinError("PINs do not match");
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
     try {
       // Save PIN securely
-      await AsyncStorage.setItem("transactionPin", pin)
+      await AsyncStorage.setItem("transactionPin", pin);
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      // Complete setup
-      onComplete()
+      // Update user profile with PIN
+      const response = await api.post("users/set_pin/", { pin });
+      if (response.data.message) {
+        // Complete setup
+        Toast.success("Pin set successfully")
+        onComplete();
+      }
     } catch (error) {
-      console.error("Error saving PIN:", error)
-      Alert.alert("Error", "Failed to save your PIN. Please try again.")
+      console.error("Error saving PIN:", error);
+      Alert.alert("Error", "Failed to save your PIN. Please try again.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <View style={styles.modalContainer}>
       <View style={styles.modalContent}>
         <View style={styles.modalHeader}>
-          <TouchableOpacity onPress={onClose}>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Ionicons name="close-outline" size={24} color={COLORS.gray500} />
           </TouchableOpacity>
           <View style={styles.modalTitleContainer}>
-            <Text style={styles.modalTitle}>{step === 1 ? "Set Transaction PIN" : "Confirm Transaction PIN"}</Text> 
-            <Ionicons name="lock-closed-outline" size={24} color={COLORS.primary} />
+            <Text style={styles.modalTitle}>
+              {step === 1 ? "Set Transaction PIN" : "Confirm Transaction PIN"}
+            </Text>
+            <Ionicons
+              name="lock-closed-outline"
+              size={24}
+              color={COLORS.primary}
+            />
           </View>
 
           <Text style={styles.modalSubtitle}>
@@ -343,7 +376,9 @@ function TransactionPinSetup({ onClose, onComplete }: { onClose: () => void, onC
                 onChangeText={handlePinChange}
                 maxLength={6}
               />
-              {pinError ? <Text style={styles.errorText}>{pinError}</Text> : null}
+              {pinError ? (
+                <Text style={styles.errorText}>{pinError}</Text>
+              ) : null}
 
               <TouchableOpacity
                 style={[styles.button, pin.length < 4 && styles.buttonDisabled]}
@@ -364,14 +399,16 @@ function TransactionPinSetup({ onClose, onComplete }: { onClose: () => void, onC
                 onChangeText={handleConfirmPinChange}
                 maxLength={6}
               />
-              {pinError ? <Text style={styles.errorText}>{pinError}</Text> : null}
+              {pinError ? (
+                <Text style={styles.errorText}>{pinError}</Text>
+              ) : null}
 
               <View style={styles.buttonRow}>
                 <TouchableOpacity
                   style={[styles.secondaryButton]}
                   onPress={() => {
-                    setStep(1)
-                    setConfirmPin("")
+                    setStep(1);
+                    setConfirmPin("");
                   }}
                 >
                   <Text style={styles.secondaryButtonText}>Back</Text>
@@ -381,7 +418,8 @@ function TransactionPinSetup({ onClose, onComplete }: { onClose: () => void, onC
                   style={[
                     styles.button,
                     styles.primaryButton,
-                    (confirmPin.length < 4 || isLoading) && styles.buttonDisabled,
+                    (confirmPin.length < 4 || isLoading) &&
+                      styles.buttonDisabled,
                   ]}
                   onPress={handleSubmit}
                   disabled={confirmPin.length < 4 || isLoading}
@@ -398,7 +436,7 @@ function TransactionPinSetup({ onClose, onComplete }: { onClose: () => void, onC
         </View>
       </View>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -424,48 +462,32 @@ const styles = StyleSheet.create({
   },
   form: {
     padding: 24,
-  },
-  inputContainer: {
-    marginBottom: 24,
+    paddingBottom: 150,
   },
   label: {
     fontSize: 16,
     fontWeight: "500",
-    color: "#333",
+    color: COLORS.black,
     marginBottom: 8,
   },
-  input: {
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 16,
-    fontSize: 16,
-  },
-  inputError: {
-    borderColor: "#e53935",
-  },
-  dateInput: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  dateText: {
-    fontSize: 16,
-    color: "#333",
-  },
-  placeholderText: {
-    color: "#999",
-  },
   errorText: {
-    color: "#e53935",
+    color: COLORS.error || "#e53935",
     fontSize: 14,
     marginTop: 4,
   },
+  helperTextContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 24,
+    backgroundColor: COLORS.gray100,
+    padding: 12,
+    borderRadius: 8,
+  },
   helperText: {
-    fontSize: 12,
+    fontSize: 14,
     color: COLORS.gray500,
-    marginTop: 4,
+    marginLeft: 8,
+    flex: 1,
   },
   button: {
     backgroundColor: COLORS.primary,
@@ -480,6 +502,36 @@ const styles = StyleSheet.create({
   buttonText: {
     color: COLORS.white,
     fontSize: 16,
+    fontWeight: "600",
+  },
+  // Gender selection styles
+  genderContainer: {
+    marginBottom: 20,
+  },
+  genderOptions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  genderOption: {
+    flex: 1,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: COLORS.gray300,
+    borderRadius: 8,
+    alignItems: "center",
+    marginRight: 8,
+    backgroundColor: COLORS.white,
+  },
+  genderOptionSelected: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primary + "10",
+  },
+  genderText: {
+    fontSize: 16,
+    color: COLORS.black,
+  },
+  genderTextSelected: {
+    color: COLORS.primary,
     fontWeight: "600",
   },
   // Modal styles
@@ -508,27 +560,34 @@ const styles = StyleSheet.create({
   modalHeader: {
     marginBottom: 24,
   },
+  closeButton: {
+    alignSelf: "flex-end",
+    padding: 4,
+  },
   modalTitleContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    marginVertical: 12,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: COLORS.gray500,
+    color: COLORS.black,
+    marginRight: 8,
   },
   modalSubtitle: {
     fontSize: 14,
     color: COLORS.gray500,
+    textAlign: "center",
   },
   pinContainer: {
     width: "100%",
   },
   pinInput: {
-    backgroundColor: "#f5f5f5",
+    backgroundColor: COLORS.gray100,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: COLORS.gray300,
     borderRadius: 8,
     padding: 16,
     fontSize: 18,
@@ -541,20 +600,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   secondaryButton: {
-    backgroundColor: "#f5f5f5",
+    backgroundColor: COLORS.gray100,
     borderRadius: 8,
     padding: 16,
-    marginRight: 8, 
+    marginRight: 8,
     marginTop: 16,
+    flex: 1,
   },
   secondaryButtonText: {
-    color: "#333",
+    color: COLORS.black,
     fontSize: 16,
     fontWeight: "600",
+    textAlign: "center",
   },
   primaryButton: {
     flex: 2,
     marginLeft: 8,
   },
-})
-
+});
